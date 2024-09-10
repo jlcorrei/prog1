@@ -488,6 +488,9 @@ function main() {
     //drawRandPixelsInInputBoxes(context);
       // shows how to draw pixels and read input file
     
-    drawInputBoxesUsingPaths(context);
+    // drawInputBoxesUsingPaths(context);
       // shows how to read input file, but not how to draw pixels
+
+    drawInputBoxesUsingPaths(context);
+    drawInputTrainglesUsingPaths(context);
 }
