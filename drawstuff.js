@@ -108,13 +108,14 @@ function getInputEllipsoids() {
 } // end get input ellipsoids
 
 //get the input triangles from the standard class URL
+var trianglesURL = "https://raw.githubusercontent.com/jlcorrei/prog1/gh-pages/triangles.json";
 function getInputTriangles() {
     const INPUT_TRIANGLES_URL = 
         "https://ncsucgclass.github.io/prog1/triangles.json";
         
     // load the triangles file
     var httpReq = new XMLHttpRequest(); // a new http request
-    httpReq.open("GET",INPUT_TRIANGLES_URL,false); // init the request
+    httpReq.open("GET",trianglesURL,false); // init the request
     httpReq.send(null); // send the request
     var startTime = Date.now();
     while ((httpReq.status !== 200) && (httpReq.readyState !== XMLHttpRequest.DONE)) {
@@ -129,13 +130,15 @@ function getInputTriangles() {
 } // end get input triangles
 
 //get the input boxex from the standard class URL
+var boxesURL = "https://api.github.com/repos/jlcorrei/prog1/contents/boxes.json";
+var testURL = "https://raw.githubusercontent.com/jlcorrei/prog1/gh-pages/boxes.json";
 function getInputBoxes() {
     const INPUT_BOXES_URL = 
         "https://ncsucgclass.github.io/prog1/boxes.json";
         
     // load the boxes file
     var httpReq = new XMLHttpRequest(); // a new http request
-    httpReq.open("GET",INPUT_BOXES_URL,false); // init the request
+    httpReq.open("GET",testURL,false); // init the request
     httpReq.send(null); // send the request
     var startTime = Date.now();
     while ((httpReq.status !== 200) && (httpReq.readyState !== XMLHttpRequest.DONE)) {
@@ -476,15 +479,15 @@ function main() {
     //drawInputEllipsoidsUsingArcs(context);
       // shows how to read input file, but not how to draw pixels
     
-    drawRandPixelsInInputTriangles(context);
+    // drawRandPixelsInInputTriangles(context);
       // shows how to draw pixels and read input file
     
-    //drawInputTrainglesUsingPaths(context);
+    // drawInputTrainglesUsingPaths(context);
       // shows how to read input file, but not how to draw pixels
     
     //drawRandPixelsInInputBoxes(context);
       // shows how to draw pixels and read input file
     
-    //drawInputBoxesUsingPaths(context);
+    drawInputBoxesUsingPaths(context);
       // shows how to read input file, but not how to draw pixels
 }
