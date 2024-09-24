@@ -109,13 +109,14 @@ function getInputEllipsoids() {
 
 //get the input triangles from the standard class URL
 var trianglesURL = "https://raw.githubusercontent.com/jlcorrei/prog1/gh-pages/triangles.json";
+var triangles2URL = "https://ncsucgclass.github.io/prog1/triangles2.json";
 function getInputTriangles() {
     const INPUT_TRIANGLES_URL = 
         "https://ncsucgclass.github.io/prog1/triangles.json";
         
     // load the triangles file
     var httpReq = new XMLHttpRequest(); // a new http request
-    httpReq.open("GET",trianglesURL,false); // init the request
+    httpReq.open("GET",triangles2URL,false); // init the request
     httpReq.send(null); // send the request
     var startTime = Date.now();
     while ((httpReq.status !== 200) && (httpReq.readyState !== XMLHttpRequest.DONE)) {
@@ -332,10 +333,24 @@ function drawInputTrainglesUsingPaths(context) {
         var n = inputTriangles.length; 
         //console.log("number of files: " + n);
 
+        const camera = getCamera();
+
+        let zBuffer = Array.from({ length: w }, () => Array(h).fill(Infinity));
+
         // Loop over the input files
         for (var f=0; f<n; f++) {
         	var tn = inputTriangles[f].triangles.length;
         	//console.log("number of triangles in this files: " + tn);
+
+            inputTriangles[f].triangles.sort((a,b) => {
+                let zA = (inputTriangles[f].vertices[a[0]][2] +
+                    inputTriangles[f].vertices[a[1]][2] +
+                    inputTriangles[f].vertices[a[2]][2]) / 3;
+                let zB = (inputTriangles[f].vertices[b[0]][2] +
+                    inputTriangles[f].vertices[b[1]][2] +
+                    inputTriangles[f].vertices[b[2]][2]) / 3;
+                return zB - zA; 
+            })
         	
         	// Loop over the triangles, draw each in 2d
         	for(var t=0; t<tn; t++){
@@ -349,18 +364,39 @@ function drawInputTrainglesUsingPaths(context) {
         		//console.log("vertexPos1 " + vertexPos1);
         		//console.log("vertexPos2 " + vertexPos2);
         		//console.log("vertexPos3 " + vertexPos3);
-        		
-            	context.fillStyle = 
-            	    "rgb(" + Math.floor(inputTriangles[f].material.diffuse[0]*255)
-            	    +","+ Math.floor(inputTriangles[f].material.diffuse[1]*255)
-            	    +","+ Math.floor(inputTriangles[f].material.diffuse[2]*255) +")"; // diffuse color
-            
-            	var path=new Path2D();
-            	path.moveTo(w*vertexPos1[0],h*vertexPos1[1]);
-            	path.lineTo(w*vertexPos2[0],h*vertexPos2[1]);
-            	path.lineTo(w*vertexPos3[0],h*vertexPos3[1]);
-            	path.closePath();
-            	context.fill(path);
+
+                const v0 = transform(vertexPos1, camera);
+                const v1 = transform(vertexPos2, camera);
+                const v2 = transform(vertexPos3, camera);
+
+                let avgZ = (v0[2] + v1[2] + v2[2]) / 3;
+
+                if (v0[2] > 0 && v1[2] > 0 && v2[2] > 0) {
+                    context.fillStyle = 
+                        "rgb(" + Math.floor(inputTriangles[f].material.diffuse[0]*255)
+                        +","+ Math.floor(inputTriangles[f].material.diffuse[1]*255)
+                        +","+ Math.floor(inputTriangles[f].material.diffuse[2]*255) +")"; 
+
+                    var path=new Path2D();
+                    path.moveTo((w / 2) * (v0[0] + 1), (h / 2) * (1 - v0[1]));
+                    path.lineTo((w / 2) * (v1[0] + 1), (h / 2) * (1 - v1[1]));
+                    path.lineTo((w / 2) * (v2[0] + 1), (h / 2) * (1 - v2[1]));
+                    path.closePath();
+                    context.fill(path);
+                }
+                
+
+                // context.fillStyle = 
+            	// "rgb(" + Math.floor(inputTriangles[f].material.diffuse[0]*255)
+            	// +","+ Math.floor(inputTriangles[f].material.diffuse[1]*255)
+            	// +","+ Math.floor(inputTriangles[f].material.diffuse[2]*255) +")"; // diffuse color
+
+                // var path=new Path2D();
+                // path.moveTo((w / 2) * (v0[0] + 1), (h / 2) * (1 - v0[1])); // Projected X and Y
+                // path.lineTo((w / 2) * (v1[0] + 1), (h / 2) * (1 - v1[1]));
+                // path.lineTo((w / 2) * (v2[0] + 1), (h / 2) * (1 - v2[1]));
+                // path.closePath();
+                // context.fill(path);
 
         	} // end for triangles
         } // end for files
@@ -460,6 +496,58 @@ function drawInputBoxesUsingPaths(context) {
         } // end for files
     } // end if box files found
 } // end draw input boxes
+
+function subtract(v1, v2) {
+    return [v1[0] - v2[0], v1[1] - v2[1], v1[2] - v2[2]];
+}
+
+function normalize(v) {
+    var len = 1 / Math.sqrt(dot(v, v));
+    return scale(len, v);
+}
+
+function dot(v1, v2) {
+    return [v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2]];
+}
+
+function scale(c, v) {
+    return[c*v[0], c*v[1], c*v[2]];
+}
+
+function cross(v1, v2) {
+    return [
+        v1[1] * v2[2] - v1[2] * v2[1],
+        v1[2] * v2[0] - v1[0] * v2[2],
+        v1[0] * v2[1] - v1[1] * v2[0]
+    ];
+}
+
+function getCamera() {
+    const eye = [0.5, 0.5, -0.5];
+    const lookAt = [0, 0, 1];
+    const up = [0, 1, 0];
+    const viewDir = subtract(lookAt, eye);
+    const normViewDir = normalize(viewDir);
+    return {eye, lookAt, up, viewDir: normViewDir};
+}
+
+function transform(vertex, camera) {
+    let transformed = [
+        vertex[0] - camera.eye[0],
+        vertex[1] - camera.eye[1],
+        vertex[2] - camera.eye[2]
+    ];
+    let d = 1.0;
+    let z = transformed[2];
+    if (z < 0.1) {
+        z = 0.1;
+    };
+    return [
+        transformed[0] / (z / d),
+        transformed[1] / (z / d),
+        z
+    ];
+}
 
 /* main -- here is where execution begins after window load */
 
